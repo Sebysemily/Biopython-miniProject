@@ -14,37 +14,31 @@ class FastaAnalyzer:
         self.handle = None
         self.seqs = {}
         name = None
-        if fasta_file.endswith(".gz"):
-            try:
-                self.handle = open(fasta_file, 'rt')
-            except IOError as e:
-                sys.stderr.write(f"Error opening {fasta_file}: {e}")
-
+        try:
+            self.handle = open(fasta_file, 'r')
+        except IOError as e:
+            sys.stderr.write(f"Error opening {fasta_file}: {e}")
         for line in self.handle:
             line = line.strip()
             if line.startswith(">"):
-                words=line[1:].split()
-                name=words [0][1:]
+                name=line[1:].split()[0]
                 self.seqs[name]=''
             else:
                 self.seqs[name]= self.seqs[name] + line.lower()
 
     def __del__(self):
-        self.handle.close()
-        pass
+        if self.handle:
+            self.handle.close()
 
     def how_many_records(self):
         records = len(self.seqs)
         return records
 
     def sequence_lengths(self):
-        lengths = {}
-        longest = {}
-        for name, seq in self.seqs.items():
-            lengths[name] = len(seq)
-            if longest[name] < len(seq):
-                longest[name] = len(seq)
-        print(longest)
+        lengths = {name: len(seq) for name, seq in self.seqs.items()}
+        max_len = max(lengths.values())
+        longest_ids = [n for n, L in lengths.items() if L == max_len]
+        print(f"Longest length is {max_len}, found in: {longest_ids}")
         return lengths
 
     # noinspection SpellCheckingInspection
@@ -61,64 +55,62 @@ class FastaAnalyzer:
     def orf(self, reading_frames :dict = None):
         if reading_frames:
             for names, rfs in reading_frames.items():
-                if len(reading_frames[rfs]) != 3:
+                if len(rfs) != 3:
                     print("Reading frame not valid")
                     return None
         else:
             reading_frames = self.reading_frame()
         open_reading_frames = {}
-        longest = {}
-        stop_codons = ['tga', 'tag', 'tga']
+        longest = {name: 0 for name in reading_frames}
+        stop_codons = ['tga', 'tag', 'taa']
         start_codon = 'atg'
         for name, rfs in reading_frames.items():
+            open_reading_frames[name] = []
             for i in range(3):
                 orfs = {}
                 seq = rfs[i]
-                rfs[i] = ''
                 orf = ''
-                start = len(seq) + 1
-                for j in range(len(seq),3):
-                    codon = seq[j:j+3]
-                    if codon == start_codon:
-                        start = j+1
-                    if start < j:
-                        orf = orf + codon
-                    if codon in stop_codons:
-                        orfs[start] = orf + codon
-                        if longest[rfs] < len(orf):
-                            longest[rfs] = len(orf)
-                        orf = ''
-                        start = len(seq)+1
-                        rfs[i] = orfs
-                        open_reading_frames[name] = rfs[i]
-        print(longest)
+                start = None
+                in_orf = False
+                for j in range(0,len(seq),3):
+                    if seq[j:j+3] != start_codon:
+                        continue
+                    for k in range(j+3, len(seq), 3):
+                        codon = seq[k:k + 3]
+                        if codon in stop_codons:
+                            orf = seq[j:k + 3]
+                            orfs[j] = orf
+                            break
+                open_reading_frames[name].append(orfs)
         return open_reading_frames
 
-    def longest_orf_of_id(self, id : str, open_reading_frames:dict = None):
+    def longest_orf_of_id(self, seq_id : str, open_reading_frames:dict = None):
         longest = {}
-        if open_reading_frames:
-            for names, rfs in open_reading_frames.items():
-                for i in range(3):
-                    for j in range(len(rfs[i])):
-                        if rfs[i][j][0:3] != 'atg':
-                            print('Open reading frame not valid')
-                            return None
-        else:
+        if open_reading_frames is None:
             open_reading_frames = self.orf()
-        # noinspection PyInconsistentReturns
-        for names, rfs in open_reading_frames.items():
-            if names == id:
-                for i in range(3):
-                    for j in range(len(rfs[i])):
-                        if longest[names][rfs[i][j]] < len(rfs[i][j]):
-                            longest[names][rfs[i]] = len(rfs[i][j])
-                return longest
-            else:
-                print('id not found')
-                return None
+        if seq_id not in open_reading_frames:
+            print(f"ID {seq_id!r} not found")
+            return None
+        best_start, best_orf = None, ""
+        for frame_dict in open_reading_frames[seq_id]:
+            for start, orf in frame_dict.items():
+                if len(orf) > len(best_orf):
+                    best_orf = orf
+                    best_start = start
+
+        return {seq_id: {"start": best_start, "orf": best_orf}}
 
 
-
+    def find_repeats(self, n: int):
+        counts = {}
+        for name, seq in self.seqs.items():
+            L = len(seq)
+            for i in range(L - n+1):
+                kmer =seq[i:i+n]
+                counts[kmer] = counts.get(kmer, 0) + 1
+        repeats = {k: v for k, v in counts.items() if v > 1}
+        most_frequent = max(repeats.items(), key=lambda kv: kv[1]) if repeats else None
+        return repeats, most_frequent
 
 
 
