@@ -1,12 +1,22 @@
+import matplotlib
+
 from utils.functions import FastaAnalyzer
+import matplotlib.pyplot as plt
 
-fa = FastaAnalyzer("data/lambda_virus.fa")
+fa = FastaAnalyzer("data/SRR835775_1.first1000.fastq", True)
+h = fa.fastq_create_hist()
+plt.bar(range(len(h)), h)
+plt.savefig("figures/hqual_of_SRR835775_1.png",
+            dpi=300,
+            bbox_inches='tight')
+plt.show()
 
+'''
 base_counts = fa.count_bases()
 print(base_counts)
 length = fa.sequence_lengths()
 print(length)
-'''
+
 records = fa.how_many_records()
 print(f"there is {records}")
 

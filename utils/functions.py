@@ -2,30 +2,56 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import sys
 
+
+def phred33_to_q(phred33):
+   return ord(phred33) - 33
+
+
 class FastaAnalyzer:
     """
     Analyze fasta file using biopython
     """
-    def __init__(self, fasta_file: str):
+    def __init__(self, fasta_file: str, fastq_file: bool=False):
         """
         Opens the fasta file in read mode
         :param fasta_file:
         """
         self.handle = None
         self.seqs = {}
+        self.seq_with_quality = {}
+        self.fastq_sequences = []
+        self.fastq_qualities = []
         name = None
         try:
             self.handle = open(fasta_file, 'r')
         except IOError as e:
             sys.stderr.write(f"Error opening {fasta_file}: {e}")
-        for line in self.handle:
-            line = line.strip()
-            if line.startswith(">"):
-                name=line[1:].split()[0]
-                self.seqs[name]=''
-            else:
-                self.seqs[name]= self.seqs[name] + line.lower()
+        if not fastq_file:
+            for line in self.handle:
+                line = line.strip()
+                if line.startswith(">"):
+                    name=line[1:].split()[0]
+                    self.seqs[name]=''
+                else:
+                    self.seqs[name]= self.seqs[name] + line.lower()
+        else:
+            while True:
+                self.handle.readline()
+                seq = self.handle.readline().rstrip()
+                self.handle.readline()
+                qual = self.handle.readline().rstrip()
+                if len(seq) ==0:
+                    break
+                self.fastq_sequences.append(seq)
+                self.fastq_qualities.append(qual)
 
+    def fastq_create_hist(self):
+        hist = [0] * 50
+        for qual in self.fastq_qualities:
+            for phred in qual:
+                q = phred33_to_q(phred)
+                hist[q] += 1
+        return hist
     def __del__(self):
         if self.handle:
             self.handle.close()
