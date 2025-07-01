@@ -112,5 +112,18 @@ class FastaAnalyzer:
         most_frequent = max(repeats.items(), key=lambda kv: kv[1]) if repeats else None
         return repeats, most_frequent
 
-
+    def count_bases(self, seq_id : str=None):
+        counts = {'g':0, 't':0, 'a':0, 'c':0}
+        if seq_id is None:
+            for name, seq in self.seqs.items():
+                for base in seq:
+                    counts[base] += 1
+            return counts
+        elif seq_id not in self.seqs:
+            print(f"ID {seq_id!r} not found")
+            return None
+        else:
+            for base in self.seqs[seq_id]:
+                counts[base] += 1
+            return counts
 

@@ -1,7 +1,12 @@
 from utils.functions import FastaAnalyzer
 
-fa = FastaAnalyzer("data/dna2.fasta")
+fa = FastaAnalyzer("data/lambda_virus.fa")
 
+base_counts = fa.count_bases()
+print(base_counts)
+length = fa.sequence_lengths()
+print(length)
+'''
 records = fa.how_many_records()
 print(f"there is {records}")
 
@@ -43,4 +48,4 @@ for seq_id, orf_dict in frame2_orfs.items():
         if len(orf_seq) > max_len:
             max_len = len(orf_seq)
             winner = (seq_id, start, orf_seq)
-
+'''
