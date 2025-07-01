@@ -1,7 +1,7 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
 import sys
-
+import collections
 
 def phred33_to_q(phred33):
    return ord(phred33) - 33
@@ -37,9 +37,9 @@ class FastaAnalyzer:
         else:
             while True:
                 self.handle.readline()
-                seq = self.handle.readline().rstrip()
+                seq = self.handle.readline().rstrip().lower()
                 self.handle.readline()
-                qual = self.handle.readline().rstrip()
+                qual = self.handle.readline().rstrip().lower()
                 if len(seq) ==0:
                     break
                 self.fastq_sequences.append(seq)
@@ -52,6 +52,30 @@ class FastaAnalyzer:
                 q = phred33_to_q(phred)
                 hist[q] += 1
         return hist
+
+    def nucleotide_counts(self):
+        count = collections.Counter()
+        if self.fastq_sequences:
+           for seq in self.fastq_sequences:
+               count.update(seq)
+           return count
+        else:
+            for name, seq in self.seqs.items():
+                count.update(seq)
+            return count
+
+    def fastq_find_gc_by_pos(self):
+        gc = [0] * 100
+        totals = [0] * 100
+        for read in self.fastq_sequences:
+            for i in range(len(read)):
+                if read[i] == 'c' or read[i] == 'g':
+                    gc[i] += 1
+                totals[i] += 1
+        for i in range(len(gc)):
+            if totals[i] > 0:
+                gc[i] /= float(totals[i])
+        return gc
     def __del__(self):
         if self.handle:
             self.handle.close()

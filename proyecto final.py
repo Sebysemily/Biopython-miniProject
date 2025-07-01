@@ -4,6 +4,15 @@ from utils.functions import FastaAnalyzer
 import matplotlib.pyplot as plt
 
 fa = FastaAnalyzer("data/SRR835775_1.first1000.fastq", True)
+print(fa.nucleotide_counts())
+'''
+gc = fa.fastq_find_gc_by_pos()
+plt.plot(range(len(gc)), gc)
+plt.savefig("figures/gc%_of_SRR835775_1.png",
+            dpi=300,
+            bbox_inches='tight')
+plt.show()
+
 h = fa.fastq_create_hist()
 plt.bar(range(len(h)), h)
 plt.savefig("figures/hqual_of_SRR835775_1.png",
@@ -11,7 +20,7 @@ plt.savefig("figures/hqual_of_SRR835775_1.png",
             bbox_inches='tight')
 plt.show()
 
-'''
+
 base_counts = fa.count_bases()
 print(base_counts)
 length = fa.sequence_lengths()
