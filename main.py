@@ -1,10 +1,13 @@
 import matplotlib
 
-from utils.functions import FastaAnalyzer
+from utils.FastaAnalyzer import FastaAnalyzer
 import matplotlib.pyplot as plt
 
-fa = FastaAnalyzer("data/phix.fa")
-print(fa.naive("gagttt"))
+reference_fa = FastaAnalyzer("data/phix.fa")
+reads_fa = FastaAnalyzer("data/")
+
+for read_name, read_seq in reads_fa.get_sequences().items():
+    matches = reference_fa.naive(read_seq)
 
 
 '''
