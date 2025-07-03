@@ -45,6 +45,19 @@ class FastaAnalyzer:
                 self.fastq_sequences.append(seq)
                 self.fastq_qualities.append(qual)
 
+    def naive(self, p):
+        occurrences = []
+        for name,seq in self.seqs.items():
+            for i in range( len(seq) - len(p) + 1):
+                match = True
+                for j in range(len(p)):
+                    if seq[i + j] != p[j]:
+                        match = False
+                        break
+                if match:
+                    occurrences.append(i)
+        return occurrences
+
     def fastq_create_hist(self):
         hist = [0] * 50
         for qual in self.fastq_qualities:

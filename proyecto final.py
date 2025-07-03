@@ -3,8 +3,10 @@ import matplotlib
 from utils.functions import FastaAnalyzer
 import matplotlib.pyplot as plt
 
-fa = FastaAnalyzer("data/SRR835775_1.first1000.fastq", True)
-print(fa.nucleotide_counts())
+fa = FastaAnalyzer("data/phix.fa")
+print(fa.naive("gagttt"))
+
+
 '''
 gc = fa.fastq_find_gc_by_pos()
 plt.plot(range(len(gc)), gc)
